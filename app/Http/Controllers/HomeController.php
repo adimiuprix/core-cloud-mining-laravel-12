@@ -40,7 +40,7 @@ class HomeController extends Controller
             $result = User::where('username', $username)->first();
             session(['user_data' => $result]);
 
-            return redirect()->route('dashboard');
+            return redirect()->to('dashboard');
         }
     }
 
