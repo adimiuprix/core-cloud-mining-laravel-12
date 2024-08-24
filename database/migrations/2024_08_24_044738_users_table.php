@@ -13,14 +13,9 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('unique_id')->nullable();
             $table->string('username')->nullable();
             $table->decimal('balance', 20, 8)->default(0.00000000);
             $table->decimal('cashouts', 20, 8)->default(0.00000000);
-            $table->integer('plan_id')->nullable();
-            $table->integer('reference_user_id')->nullable();
-            $table->float('affiliate_earns', 20, 8)->default(0.00000000);
-            $table->float('affiliate_paid', 20, 8)->default(0.00000000);
             $table->string('ip_addr', 25)->nullable();
             $table->timestamps();
         });
