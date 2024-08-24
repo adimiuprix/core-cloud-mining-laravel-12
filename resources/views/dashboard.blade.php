@@ -13,6 +13,10 @@
         <span id="balance">{{ $balance }}</span>
     </div>
 
+    <div>
+        <button type="button" onclick="location.href='logout'">Logout</button>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script type="text/javascript">
     //Counter

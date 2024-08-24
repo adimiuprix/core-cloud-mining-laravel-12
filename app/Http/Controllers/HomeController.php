@@ -16,14 +16,25 @@ class HomeController extends Controller
 
         $result = User::where('username', $username)->first();
 
+        $plan = Plan::where('is_default', 1)->first(['id']);
+
         if ($result) {
             session(['user_data' => $result]);
 
             return redirect()->to('dashboard');
         } else {
-            User::create([
+            $user = User::create([
                 'username' => $username,
                 'ip_addr' => $user_ip_addr,
+            ]);
+
+            UserPlanHistory::create([
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'status'  => 'active',
+                'created_at' => date('Y-m-d H:i:s'),
+                'expire_date' => date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + 7 days')),
+                'last_sum' => time()
             ]);
 
             $result = User::where('username', $username)->first();
@@ -61,5 +72,12 @@ class HomeController extends Controller
             'acplans' => $active_plans,
             'user_earning_rate' => $userEarningRate
         ]);
+    }
+
+    public function logout()
+    {
+        session()->flush();
+
+        return redirect()->to('/');
     }
 }
