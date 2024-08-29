@@ -78,12 +78,7 @@ class User extends Authenticatable
 
     public static function getUserBalance(int $user_id) :float
     {
-        $result = DB::table('users')
-            ->select('balance')
-            ->where('id', $user_id)
-            ->value('balance');
-
-        return $result;
+        return DB::table('users')->where('id', $user_id)->value('balance');
     }
 
     public static function getActiveUserPlans(int $user_id)
