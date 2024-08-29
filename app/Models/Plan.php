@@ -12,18 +12,10 @@ class Plan extends Model
 
     public static function plansCron(array $data_session): void
     {
-        $plans = UserPlanHistory::where('user_id', $data_session['id'])
+        UserPlanHistory::where('user_id', $data_session['id'])
             ->where('status', 'active')
             ->whereNotNull('expire_date')
-            ->get();
-
-        foreach ($plans as $plan) {
-            $now = time();
-            $expire_date = strtotime($plan->expire_date);
-
-            if ($now >= $expire_date) {
-                $plan->update(['status' => 'inactive']);
-            }
-        }
+            ->where('expire_date', '<=', now())
+            ->update(['status' => 'inactive']);
     }
 }
