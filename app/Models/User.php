@@ -47,27 +47,22 @@ class User extends Authenticatable
 
     public static function getBalance(array $data): string
     {
-        $result = DB::table('user_plan_histories as uph')
-            ->select('uph.id', 'uph.plan_id', 'uph.user_id', 'uph.last_sum', 'uph.created_at', 'p.earning_rate')
+        $currentTime = time();
+
+        $earning = DB::table('user_plan_histories as uph')
             ->join('plans as p', 'uph.plan_id', '=', 'p.id')
             ->where('uph.user_id', $data['id'])
             ->where('uph.status', 'active')
             ->get()
-            ->toArray();
-
-        $earning = 0;
-
-        if ($result) {
-            $currentTime = time();
-
-            foreach ($result as $value) {
-                $lastSum  = $value->last_sum ?: strtotime($value->created_at);
+            ->sum(function ($value) use ($currentTime) {
+                $lastSum = $value->last_sum ?: strtotime($value->created_at);
                 $sec = $currentTime - $lastSum;
-                $earning += $sec * ($value->earning_rate / 60);
+                $earning = $sec * ($value->earning_rate / 60);
 
                 UserPlanHistory::where('id', $value->id)->update(['last_sum' => $currentTime]);
-            }
-        }
+
+                return $earning;
+            });
 
         return number_format($earning, 8, '.', '');
     }
