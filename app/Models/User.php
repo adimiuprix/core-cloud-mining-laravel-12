@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -9,12 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'unique_id',
@@ -22,63 +24,65 @@ class User extends Authenticatable
         'balance',
         'cashouts',
         'plan_id',
-        'reference_user_id',
-        'affiliate_earns',
-        'affiliate_paid',
-        'ip_addr'
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
-    protected $hidden = [];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public static function getBalance(array $data): string 
     {
-        return [];
-    }
-
-    public static function getBalance(array $data): string
-    {
+        // Validate the input data
         $currentTime = time();
 
-        $earning = DB::table('user_plan_histories as uph')
+        // Ensure 'id' is present in the data array
+        $userPlans = DB::table('user_plan_histories as uph')
             ->join('plans as p', 'uph.plan_id', '=', 'p.id')
             ->where('uph.user_id', $data['id'])
             ->where('uph.status', 'active')
-            ->get()
-            ->sum(function ($value) use ($currentTime) {
-                $lastSum = $value->last_sum ?: strtotime($value->created_at);
-                $sec = $currentTime - $lastSum;
-                $earning = $sec * ($value->earning_rate / 60);
+            ->select('uph.id', 'uph.last_sum', 'uph.created_at', 'p.earning_rate')
+            ->get();
 
-                UserPlanHistory::where('id', $value->id)->update(['last_sum' => $currentTime]);
+        // If no plans are found, return 0
+        $totalEarning = 0;
 
-                return $earning;
-            });
+        $idsToUpdate = [];
 
-        return number_format($earning, 8, '.', '');
+        // Calculate earnings for each plan
+        foreach ($userPlans as $value) {
+            $lastSum = $value->last_sum ?: strtotime($value->created_at);
+            $sec = $currentTime - $lastSum;
+            $earning = $sec * ($value->earning_rate / 60);
+
+            $totalEarning += $earning;
+            $idsToUpdate[] = $value->id;
+        }
+
+        if (!empty($idsToUpdate)) {
+            UserPlanHistory::whereIn('id', $idsToUpdate)->update(['last_sum' => $currentTime]);
+        }
+
+        return number_format($totalEarning, 8, '.', '');
     }
 
     public static function updateBalances(int $user_id, float $balance, float $withdraws)
     {
-        return self::where('id', $user_id)
-            ->update([
-                'balance' => DB::raw('balance + ' . $balance),
-                'cashouts' => DB::raw('cashouts + ' . $withdraws),
-            ]);
+        return DB::transaction(function () use ($user_id, $balance, $withdraws) {
+            $user = self::where('id', $user_id)->lockForUpdate()->first();
+            if ($user) {
+                $user->balance += $balance;
+                $user->cashouts += $withdraws;
+                $user->save();
+            }
+            return $user;
+        });
     }
 
     public static function getUserBalance(int $user_id) :float
     {
-        return DB::table('users')->where('id', $user_id)->value('balance');
+        $user = self::findOrFail($user_id);
+        return (float) $user->balance;
     }
 
     public static function getActiveUserPlans(int $user_id)
