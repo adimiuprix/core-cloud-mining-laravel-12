@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_plan_history');
+        Schema::dropIfExists('user_plan_histories');
     }
 };

@@ -66,13 +66,12 @@ class User extends Authenticatable
         return number_format($totalEarning, 8, '.', '');
     }
 
-    public static function updateBalances(int $user_id, float $balance, float $withdraws)
+    public static function updateBalances(int $user_id, float $balance)
     {
-        return DB::transaction(function () use ($user_id, $balance, $withdraws) {
+        return DB::transaction(function () use ($user_id, $balance) {
             $user = self::where('id', $user_id)->lockForUpdate()->first();
             if ($user) {
                 $user->balance += $balance;
-                $user->cashouts += $withdraws;
                 $user->save();
             }
             return $user;
