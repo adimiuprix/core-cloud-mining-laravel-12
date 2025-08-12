@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('username')->nullable();
             $table->decimal('balance', 20, 8)->default(0.00000000);
-            $table->decimal('cashouts', 20, 8)->default(0.00000000);
             $table->timestamps();
         });
 
