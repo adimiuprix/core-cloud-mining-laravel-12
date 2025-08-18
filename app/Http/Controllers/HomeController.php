@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\UserPlanHistory;
+use App\Models\UserMiningHistory;
 
 class HomeController extends Controller
 {
@@ -27,7 +27,7 @@ class HomeController extends Controller
                 'ip_addr' => $user_ip_addr,
             ]);
 
-            UserPlanHistory::create([
+            UserMiningHistory::create([
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
                 'status'  => 'active',

@@ -37,11 +37,11 @@ class User extends Authenticatable
         $currentTime = time();
 
         // Ensure 'id' is present in the data array
-        $userPlans = DB::table('user_plan_histories as uph')
-            ->join('plans as p', 'uph.plan_id', '=', 'p.id')
-            ->where('uph.user_id', $data['id'])
-            ->where('uph.status', 'active')
-            ->select('uph.id', 'uph.last_sum', 'uph.created_at', 'p.earning_rate')
+        $userPlans = DB::table('user_mining_histories as umh')
+            ->join('plans as p', 'umh.plan_id', '=', 'p.id')
+            ->where('umh.user_id', $data['id'])
+            ->where('umh.status', 'active')
+            ->select('umh.id', 'umh.last_sum', 'umh.created_at', 'p.earning_rate')
             ->get();
 
         // If no plans are found, return 0
@@ -60,7 +60,7 @@ class User extends Authenticatable
         }
 
         if (!empty($idsToUpdate)) {
-            UserPlanHistory::whereIn('id', $idsToUpdate)->update(['last_sum' => $currentTime]);
+            UserMiningHistory::whereIn('id', $idsToUpdate)->update(['last_sum' => $currentTime]);
         }
 
         return number_format($totalEarning, 8, '.', '');
@@ -86,11 +86,11 @@ class User extends Authenticatable
 
     public static function getActiveUserPlans(int $user_id)
     {
-        return  DB::table('user_plan_histories')
-            ->join('plans', 'plans.id', '=', 'user_plan_histories.plan_id')
-            ->select('user_plan_histories.*', 'plans.*')
-            ->where('user_plan_histories.user_id', $user_id)
-            ->where('user_plan_histories.status', 'active')
+        return  DB::table('user_mining_histories')
+            ->join('plans', 'plans.id', '=', 'user_mining_histories.plan_id')
+            ->select('user_mining_histories.*', 'plans.*')
+            ->where('user_mining_histories.user_id', $user_id)
+            ->where('user_mining_histories.status', 'active')
             ->get();
     }
 }
