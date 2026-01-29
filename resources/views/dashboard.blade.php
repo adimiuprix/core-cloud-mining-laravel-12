@@ -17,7 +17,7 @@
         <button type="button" onclick="location.href='logout'">Logout</button>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-4.0.0.js"></script>
     <script type="text/javascript">
     $(document).ready(function() {
         // Preserve original business logic values
