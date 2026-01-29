@@ -19,4 +19,9 @@ class UserMiningHistory extends Model
         'expire_date',
         'created_at'
     ];
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'plan_id');
+    }
 }

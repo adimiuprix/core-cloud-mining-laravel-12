@@ -31,36 +31,30 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    public static function getBalance(array $data): string 
+    public static function getBalance(array $data): string
     {
-        // Validate the input data
         $currentTime = time();
 
-        // Ensure 'id' is present in the data array
-        $userPlans = DB::table('user_mining_histories as umh')
-            ->join('plans as p', 'umh.plan_id', '=', 'p.id')
-            ->where('umh.user_id', $data['id'])
-            ->where('umh.status', 'active')
-            ->select('umh.id', 'umh.last_sum', 'umh.created_at', 'p.earning_rate')
-            ->get();
+        $userPlans = UserMiningHistory::with('plan')
+            ->where('user_id', $data['id'])
+            ->where('status', 'active')
+            ->get(['id', 'last_sum', 'created_at', 'plan_id']);
 
-        // If no plans are found, return 0
         $totalEarning = 0;
-
         $idsToUpdate = [];
 
-        // Calculate earnings for each plan
         foreach ($userPlans as $value) {
             $lastSum = $value->last_sum ?: strtotime($value->created_at);
             $sec = $currentTime - $lastSum;
-            $earning = $sec * ($value->earning_rate / 60);
+            $earning = $sec * ($value->plan->earning_rate / 60);
 
             $totalEarning += $earning;
             $idsToUpdate[] = $value->id;
         }
 
         if (!empty($idsToUpdate)) {
-            UserMiningHistory::whereIn('id', $idsToUpdate)->update(['last_sum' => $currentTime]);
+            UserMiningHistory::whereIn('id', $idsToUpdate)
+                ->update(['last_sum' => $currentTime]);
         }
 
         return number_format($totalEarning, 8, '.', '');
@@ -70,10 +64,12 @@ class User extends Authenticatable
     {
         return DB::transaction(function () use ($user_id, $balance) {
             $user = self::where('id', $user_id)->lockForUpdate()->first();
+
             if ($user) {
                 $user->balance += $balance;
                 $user->save();
             }
+
             return $user;
         });
     }
