@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('plan_id');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->bigInteger('last_sum');
-            $table->date('expire_date')->nullable();
+            $table->bigInteger('expire_date')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

@@ -20,7 +20,7 @@ class UserMiningHistory extends Model
     ];
 
     protected $casts = [
-        'expire_date' => 'datetime',
+        'expire_date' => 'integer',
         'last_sum' => 'integer'
     ];
 
@@ -55,7 +55,7 @@ class UserMiningHistory extends Model
     {
         $currentTime = time();
         $startTime = $this->last_sum ?: $this->created_at->timestamp;
-        
+
         $seconds = $currentTime - $startTime;
         $earning = $seconds * ($this->plan->earning_rate / 60);
 

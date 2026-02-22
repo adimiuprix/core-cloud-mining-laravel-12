@@ -24,7 +24,7 @@ class HomeController extends Controller
                 $user->miningHistories()->create([
                     'plan_id'     => $defaultPlan->id,
                     'status'      => 'active',
-                    'expire_date' => now()->addDays(7),
+                    'expire_date' => time() + (7 * 24 * 60 * 60),
                     'last_sum'    => time()
                 ]);
             }

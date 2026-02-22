@@ -64,7 +64,7 @@ class User extends Authenticatable
         $this->miningHistories()
             ->active()
             ->whereNotNull('expire_date')
-            ->where('expire_date', '<=', now())
+            ->where('expire_date', '<=', time())
             ->update(['status' => 'inactive']);
     }
 
