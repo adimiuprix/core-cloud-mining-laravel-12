@@ -5,42 +5,34 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\UserMiningHistory;
 
 class HomeController extends Controller
 {
-    public function authorize(Request $request) {
-        $user_ip_addr = $request->ip();
+    public function authorize(Request $request)
+    {
         $username = $request->input('username');
 
-        $result = User::where('username', $username)->first();
+        $user = User::firstOrCreate(
+            ['username' => $username]
+        );
 
-        $plan = Plan::where('is_default', 1)->first(['id']);
+        // Assign free plan if it's a new user or has no active histories
+        if ($user->wasRecentlyCreated || !$user->miningHistories()->exists()) {
+            $defaultPlan = Plan::where('is_default', true)->first();
 
-        if ($result) {
-            session(['user_data' => $result]);
-
-            return redirect()->to('dashboard');
-        } else {
-            $user = User::create([
-                'username' => $username,
-                'ip_addr' => $user_ip_addr,
-            ]);
-
-            UserMiningHistory::create([
-                'user_id' => $user->id,
-                'plan_id' => $plan->id,
-                'status'  => 'active',
-                'created_at' => date('Y-m-d H:i:s'),
-                'expire_date' => date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' + 7 days')),
-                'last_sum' => time()
-            ]);
-
-            $result = User::where('username', $username)->first();
-            session(['user_data' => $result]);
-
-            return redirect()->to('dashboard');
+            if ($defaultPlan) {
+                $user->miningHistories()->create([
+                    'plan_id'     => $defaultPlan->id,
+                    'status'      => 'active',
+                    'expire_date' => now()->addDays(7),
+                    'last_sum'    => time()
+                ]);
+            }
         }
+
+        session(['user_data' => $user]);
+
+        return redirect()->to('dashboard');
     }
 
     public function logout()

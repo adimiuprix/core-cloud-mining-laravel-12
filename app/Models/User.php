@@ -24,69 +24,68 @@ class User extends Authenticatable
         'balance',
         'cashouts',
         'plan_id',
+        'ip_addr'
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Get the mining histories for the user.
      */
-    public static function getBalance(array $data): string
+    public function miningHistories()
     {
+        return $this->hasMany(UserMiningHistory::class);
+    }
+
+    /**
+     * Calculate and sync user balance from active plans.
+     */
+    public function syncBalance(): float
+    {
+        $activePlans = $this->miningHistories()->active()->with('plan')->get();
+        $totalEarning = 0;
         $currentTime = time();
 
-        $userPlans = UserMiningHistory::with('plan')
-            ->where('user_id', $data['id'])
-            ->where('status', 'active')
-            ->get(['id', 'last_sum', 'created_at', 'plan_id']);
-
-        $totalEarning = 0;
-        $idsToUpdate = [];
-
-        foreach ($userPlans as $value) {
-            $lastSum = $value->last_sum ?: strtotime($value->created_at);
-            $sec = $currentTime - $lastSum;
-            $earning = $sec * ($value->plan->earning_rate / 60);
-
-            $totalEarning += $earning;
-            $idsToUpdate[] = $value->id;
+        foreach ($activePlans as $history) {
+            $totalEarning += $history->calculateEarnings();
+            $history->update(['last_sum' => $currentTime]);
         }
 
-        if (!empty($idsToUpdate)) {
-            UserMiningHistory::whereIn('id', $idsToUpdate)
-                ->update(['last_sum' => $currentTime]);
+        if ($totalEarning > 0) {
+            $this->increment('balance', $totalEarning);
         }
 
-        return number_format($totalEarning, 8, '.', '');
+        return (float) $this->balance;
     }
 
-    public static function updateBalances(int $user_id, float $balance)
+    /**
+     * Expire plans that have reached their expire_date.
+     */
+    public function expirePlans(): void
     {
-        return DB::transaction(function () use ($user_id, $balance) {
-            $user = self::where('id', $user_id)->lockForUpdate()->first();
-
-            if ($user) {
-                $user->balance += $balance;
-                $user->save();
-            }
-
-            return $user;
-        });
+        $this->miningHistories()
+            ->active()
+            ->whereNotNull('expire_date')
+            ->where('expire_date', '<=', now())
+            ->update(['status' => 'inactive']);
     }
 
-    public static function getUserBalance(int $user_id) :float
+    /**
+     * Get active plans through relationship.
+     */
+    public function activePlans()
     {
-        $user = self::findOrFail($user_id);
-        return (float) $user->balance;
-    }
-
-    public static function getActiveUserPlans(int $user_id)
-    {
-        return  DB::table('user_mining_histories')
-            ->join('plans', 'plans.id', '=', 'user_mining_histories.plan_id')
+        return $this->miningHistories()->active()->join('plans', 'plans.id', '=', 'user_mining_histories.plan_id')
             ->select('user_mining_histories.*', 'plans.*')
-            ->where('user_mining_histories.user_id', $user_id)
-            ->where('user_mining_histories.status', 'active')
             ->get();
+    }
+
+    /**
+     * Get earning rate per minute.
+     */
+    public function getTotalEarningRate(): float
+    {
+        return (float) $this->miningHistories()->active()
+            ->with('plan')
+            ->get()
+            ->sum(fn($history) => $history->plan->earning_rate);
     }
 }

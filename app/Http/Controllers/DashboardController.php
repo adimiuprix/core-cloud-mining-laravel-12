@@ -2,34 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Plan;
 use App\Models\User;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user_session = session()->get('user_data')->toArray();
+        $sessionData = session()->get('user_data');
 
-        Plan::plansCron($user_session);
+        if (!$sessionData) {
+            return redirect()->to('/');
+        }
 
-        $balance = User::getBalance($user_session);
+        /** @var User $user */
+        $user = User::findOrFail($sessionData['id']);
 
-        User::updateBalances($user_session['id'], $balance);
-
-        $getUserBalance = User::getUserBalance($user_session['id']);
-
-        $total_balance = number_format($getUserBalance,8,'.','');
-
-        $active_plans = User::getActiveUserPlans($user_session['id']);
-
-        $userEarningRate = $active_plans->pluck('earning_rate')->map('floatval')->sum();
+        // Orchestrate background tasks
+        $user->expirePlans();
+        $user->syncBalance();
 
         return view('dashboard', [
-            'address' => $user_session['username'],
-            'balance' => $total_balance,
-            'acplans' => $active_plans,
-            'user_earning_rate' => $userEarningRate
+            'address'           => $user->username,
+            'balance'           => number_format($user->balance, 8, '.', ''),
+            'acplans'           => $user->activePlans(),
+            'user_earning_rate' => $user->getTotalEarningRate()
         ]);
     }
 }

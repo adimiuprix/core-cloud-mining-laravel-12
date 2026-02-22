@@ -10,12 +10,22 @@ class Plan extends Model
 {
     use HasFactory;
 
-    public static function plansCron(array $data_session): void
+    protected $fillable = [
+        'plan_name',
+        'is_default',
+        'point_per_day',
+        'version',
+        'earning_rate',
+        'price',
+        'duration',
+        'profit'
+    ];
+
+    /**
+     * Get histories associated with this plan.
+     */
+    public function histories()
     {
-        UserMiningHistory::where('user_id', $data_session['id'])
-            ->where('status', 'active')
-            ->whereNotNull('expire_date')
-            ->where('expire_date', '<=', now())
-            ->update(['status' => 'inactive']);
+        return $this->hasMany(UserMiningHistory::class);
     }
 }
