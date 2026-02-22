@@ -1,61 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Core Cloud Mining Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Platform simulasi Cloud Mining aset digital (Point/Crypto) yang dibangun menggunakan **Laravel 12**. Platform ini menawarkan pengalaman penambangan real-time yang mulus dengan visualisasi balance yang diperbarui setiap milidetik di sisi client.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Real-time Mining Counter**: Pergerakan saldo yang sangat halus (60 FPS) menggunakan optimasi `requestAnimationFrame` tanpa membebani server.
+- **Automated Balance Sync**: Sinkronisasi otomatis antara aktivitas mining di sisi client dengan database server setiap kali user berinteraksi dengan dashboard.
+- **Mining Plans System**: Sistem paket mining yang fleksibel (Free & Paid) dengan durasi dan tingkat pendapatan (`earning rate`) yang berbeda.
+- **Auto-Provisioning**: User baru secara otomatis mendapatkan paket "Free Plan" saat pertama kali mendaftar.
+- **Plan Expiration Logic**: Sistem otomatis mendeteksi dan menonaktifkan paket yang telah melewati masa berlakunya.
+- **Modern UI/UX**: Dibangun dengan **Tailwind CSS v4** untuk antarmuka yang modern, responsif, dan performa styling yang optimal.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠️ Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Frontend**: Tailwind CSS v4, Vite, Blade Templates
+- **Client Logic**: jQuery 4.0.0 & Vanilla JS (v_v)
+- **Database**: MySQL / SQLite (mendukung Eloquent ORM)
+- **Tooling**: Composer, NPM, Vite
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 💻 Cara Instalasi
 
-## Laravel Sponsors
+Ikuti langkah-langkah berikut untuk menjalankan project di lingkungan lokal Anda:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/adimiuprix/core-cloud-mining-laravel-12.git
+   cd tosun
+   ```
 
-### Premium Partners
+2. **Install Dependensi Backend**
+   ```bash
+   composer install
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+3. **Install Dependensi Frontend**
+   ```bash
+   npm install
+   ```
 
-## Contributing
+4. **Konfigurasi Lingkungan (`.env`)**
+   Salin file `.env.example` menjadi `.env` dan sesuaikan konfigurasi database Anda.
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+5. **Migrasi dan Seed Database**
+   Jalankan migrasi untuk membuat tabel dan mengisi data awal paket (plans).
+   ```bash
+   php artisan migrate --seed
+   ```
 
-## Code of Conduct
+6. **Menjalankan Aplikasi**
+   Gunakan perintah berikut untuk menjalankan server development dan Vite secara bersamaan:
+   ```bash
+   npm run dev
+   ```
+   Aplikasi akan tersedia di `http://localhost:8000` (atau sesuai konfigurasi artisan serve).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 📂 Struktur Project Penting
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- `app/Models/User.php`: Logika inti perhitungan saldo (`syncBalance`) dan manajemen status plan.
+- `app/Http/Controllers/DashboardController.php`: Orkestrator aktivitas background tugas sebelum merender tampilan.
+- `resources/views/dashboard.blade.php`: Implementasi frontend untuk animasi real-time counter.
+- `database/migrations/`: Definisi struktur tabel `plans` dan `user_mining_histories`.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📄 Lisensi
+
+Project ini dilisensikan di bawah [MIT License](LICENSE).
+
+---
+*Developed with ❤️ by Adimiuprix*
